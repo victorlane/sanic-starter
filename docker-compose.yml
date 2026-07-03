@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app
+    ports: ["5432:5432"]
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  # Uncomment to enable Redis sessions locally (also set REDIS_URL in .env):
+  # redis:
+  #   image: redis:7-alpine
+  #   ports: ["6379:6379"]
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@db:5432/app
+    ports: ["8000:8000"]
+    depends_on: [db]

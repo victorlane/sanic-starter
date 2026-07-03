@@ -1,0 +1,47 @@
+[project]
+name = "sanic-starter"
+version = "0.1.0"
+description = "Opinionated Sanic starter"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sanic @ git+https://github.com/victorlane/sanic-framework@main",
+    "sanic-ext>=23.12.0",
+    "pydantic>=2.0",
+    "mayim[postgres]>=1.3.2",
+    "psycopg[binary]>=3.1",
+    "pyjwt>=2.10",
+    "bcrypt>=4.2",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+# Redis-backed sessions, install with:  uv sync --extra redis
+redis = ["redis>=5.0"]
+# Prometheus /metrics endpoint, install with:  uv sync --extra metrics
+metrics = [
+    "sanic-prometheus @ git+https://github.com/victorlane/sanic-prometheus@master",
+]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 79
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "sanic-testing>=24.6.0",
+]
+
+[tool.hatch.metadata]
+# Required to depend on the fork via a direct git URL.
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
