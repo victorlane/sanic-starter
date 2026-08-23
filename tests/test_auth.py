@@ -9,15 +9,13 @@ import os
 import uuid
 
 import pytest
-
 from sanic import Sanic
 
 os.environ.setdefault("APP_SECRET", "a-sufficiently-long-test-secret-key-32bytes")
 os.environ.setdefault("SECURITY_HEADERS", "true")
 
-from app.security import hash_password  # noqa: E402
-from app.services.users import UserExecutor, UserRow  # noqa: E402
-
+from app.security import hash_password
+from app.services.users import UserExecutor, UserRow
 
 Sanic.test_mode = True
 

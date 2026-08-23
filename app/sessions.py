@@ -23,13 +23,11 @@ Then in a handler::
 from __future__ import annotations
 
 import json
-
 from os import getenv
 from uuid import uuid4
 
 from sanic import Request, Sanic
 from sanic.response import HTTPResponse
-
 
 COOKIE = "session"
 TTL_SECONDS = 60 * 60 * 24 * 7  # 7 days

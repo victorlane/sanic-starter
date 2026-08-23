@@ -17,7 +17,6 @@ from app.models.user import LoginPayload, RegisterPayload, TokenResponse
 from app.security import hash_password, issue_token, verify_password
 from app.services.users import UserExecutor
 
-
 auth = Blueprint("auth", url_prefix="/auth")
 
 

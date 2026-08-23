@@ -19,7 +19,6 @@ from app.routes.me import me
 from app.services.users import UserExecutor
 from app.sessions import install_sessions
 
-
 load_dotenv()
 
 

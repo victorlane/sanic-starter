@@ -15,7 +15,6 @@ from sanic_ext import openapi
 
 from app.security import protected, require_scopes
 
-
 me = Blueprint("me", url_prefix="/me")
 
 

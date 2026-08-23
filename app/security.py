@@ -8,16 +8,12 @@ authorization.
 
 from __future__ import annotations
 
+import bcrypt
 import jwt
-
 from jwt.exceptions import PyJWTError
 from sanic import Request
-from sanic.contrib.auth import get_token
+from sanic.contrib.auth import get_token, scoped
 from sanic.contrib.auth import protected as _protected
-from sanic.contrib.auth import scoped
-
-import bcrypt
-
 
 # --- password hashing -------------------------------------------------------
 
