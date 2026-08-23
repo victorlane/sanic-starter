@@ -60,7 +60,8 @@ async def _verify(request: Request) -> dict | None:
     return decode_token(request)
 
 
-# ``@protected`` — 401s unauthenticated requests, puts claims on request.ctx.user
+# ``@protected`` — 401s unauthenticated requests, puts claims on
+# request.ctx.user
 protected = _protected(_verify)
 
 

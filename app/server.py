@@ -51,7 +51,8 @@ def create_app(name: str = "SanicStarter", *, use_db: bool = True) -> Sanic:
         version="0.1.0",
         description="Starter API — JWT auth, mayim/Postgres, DI, OpenAPI.",
     )
-    # Register the bearer security scheme referenced by @openapi.secured("token").
+    # Register the bearer security scheme referenced by
+    # @openapi.secured("token").
     app.ext.openapi.add_security_scheme(
         "token", "http", scheme="bearer", bearer_format="JWT"
     )

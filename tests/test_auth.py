@@ -11,7 +11,9 @@ import uuid
 import pytest
 from sanic import Sanic
 
-os.environ.setdefault("APP_SECRET", "a-sufficiently-long-test-secret-key-32bytes")
+os.environ.setdefault(
+    "APP_SECRET", "a-sufficiently-long-test-secret-key-32bytes"
+)
 os.environ.setdefault("SECURITY_HEADERS", "true")
 
 from app.security import hash_password
@@ -43,9 +45,10 @@ def app():
 
     from app.server import create_app
 
-    # Extensions register into process-global registries; clear BOTH so each
-    # test builds a clean app. Extend.register() appends to Extend._pre_registry
-    # (separate from Extension._name_registry), and the module-level
+    # Extensions register into process-global registries; clear BOTH so
+    # each test builds a clean app. Extend.register() appends to
+    # Extend._pre_registry (separate from Extension._name_registry), and
+    # the module-level
     # ``app = create_app()`` in app.server runs at import time with the mayim
     # extension — without this the real Postgres extension leaks into tests.
     Extension.reset()

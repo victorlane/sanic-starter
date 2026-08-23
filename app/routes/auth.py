@@ -26,7 +26,9 @@ auth = Blueprint("auth", url_prefix="/auth")
 @openapi.body(RegisterPayload)
 @openapi.response(201, {"application/json": TokenResponse}, "Created")
 @validate(json=RegisterPayload)
-async def register(request: Request, body: RegisterPayload, users: UserExecutor):
+async def register(
+    request: Request, body: RegisterPayload, users: UserExecutor
+):
     existing = await users.by_username(body.username)
     if existing is not None:
         return json({"error": "username taken"}, status=409)
@@ -37,15 +39,17 @@ async def register(request: Request, body: RegisterPayload, users: UserExecutor)
         scopes=["user"],
     )
     token = issue_token(
-        request, {"sub": row.id, "username": row.username, "scopes": row.scopes}
+        request,
+        {"sub": row.id, "username": row.username, "scopes": row.scopes},
     )
     return json({"token": token}, status=201)
 
 
 @auth.post("/login")
-# Brute-force protection: 5 attempts per client IP, refilled every 60s. Excess
-# requests get a 429 before ever touching the database. NOTE: the in-memory
-# backend is per-worker; use a shared backend for a global limit across workers.
+# Brute-force protection: 5 attempts per client IP, refilled every 60s.
+# Excess requests get a 429 before ever touching the database. NOTE: the
+# in-memory backend is per-worker; use a shared backend for a global limit
+# across workers.
 @ratelimit(5, 60)
 @openapi.tag("auth")
 @openapi.summary("Exchange credentials for a JWT")
@@ -58,6 +62,7 @@ async def login(request: Request, body: LoginPayload, users: UserExecutor):
         return json({"error": "invalid credentials"}, status=401)
 
     token = issue_token(
-        request, {"sub": row.id, "username": row.username, "scopes": row.scopes}
+        request,
+        {"sub": row.id, "username": row.username, "scopes": row.scopes},
     )
     return json({"token": token})

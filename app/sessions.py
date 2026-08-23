@@ -37,7 +37,8 @@ class RedisSessionStore:
     """Minimal async session store over redis.asyncio."""
 
     def __init__(self, url: str, prefix: str = "session:") -> None:
-        # Imported lazily so the dependency is only needed when sessions are on.
+        # Imported lazily so the dependency is only needed when sessions
+        # are on.
         from redis.asyncio import from_url
 
         self._redis = from_url(url, decode_responses=True)

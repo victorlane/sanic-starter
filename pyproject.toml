@@ -29,6 +29,31 @@ asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 79
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "SIM",   # flake8-simplify
+    "ASYNC", # flake8-async
+    "PERF",  # perflint
+    "PTH",   # flake8-use-pathlib
+    "RUF",   # ruff-specific rules
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ty.rules]
+# mayim executor methods are intentionally bodiless (`...`); mayim's
+# hydrator fills them in at runtime from the `@query` SQL.
+empty-body = "ignore"
 
 [build-system]
 requires = ["hatchling"]
@@ -37,6 +62,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "sanic-testing>=24.6.0",
+    "ty>=0.0.74",
 ]
 
 [tool.hatch.metadata]
