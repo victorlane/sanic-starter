@@ -45,6 +45,17 @@ def create_app(name: str = "SanicStarter", *, use_db: bool = True) -> Sanic:
     app.config.OAS = _bool(getenv("OAS"), True)
 
     # --- extensions (sanic-ext must be attached before app.ext / DI) ---
+    # --- dependency injection: mayim executors become injectable by type ---
+    # Registered before Extend(app): Extend only picks up extensions that
+    # were registered by the time it is instantiated.
+    if use_db:
+        dsn = getenv(
+            "POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/app"
+        )
+        Extend.register(
+            SanicMayimExtension(executors=[UserExecutor], dsn=dsn)
+        )
+
     Extend(app)
     app.ext.openapi.describe(
         "Sanic Starter API",
@@ -56,15 +67,6 @@ def create_app(name: str = "SanicStarter", *, use_db: bool = True) -> Sanic:
     app.ext.openapi.add_security_scheme(
         "token", "http", scheme="bearer", bearer_format="JWT"
     )
-
-    # --- dependency injection: mayim executors become injectable by type ---
-    if use_db:
-        dsn = getenv(
-            "POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/app"
-        )
-        Extend.register(
-            SanicMayimExtension(executors=[UserExecutor], dsn=dsn)
-        )
 
     # --- security battery (headers + trusted-host enforcement) ---
     enable_security(app)

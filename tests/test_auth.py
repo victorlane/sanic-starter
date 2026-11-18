@@ -16,8 +16,9 @@ os.environ.setdefault(
 )
 os.environ.setdefault("SECURITY_HEADERS", "true")
 
+from app.models.user import User
 from app.security import hash_password
-from app.services.users import UserExecutor, UserRow
+from app.services.users import UserExecutor
 
 Sanic.test_mode = True
 
@@ -26,7 +27,7 @@ class FakeUsers(UserExecutor):
     """In-memory stand-in for the mayim executor."""
 
     def __init__(self):
-        self._rows: dict[str, UserRow] = {}
+        self._rows: dict[str, User] = {}
         self._id = 0
 
     async def by_username(self, username: str):
@@ -34,7 +35,12 @@ class FakeUsers(UserExecutor):
 
     async def create(self, username, password_hash, scopes):
         self._id += 1
-        row = UserRow(self._id, username, password_hash, scopes)
+        row = User(
+            id=self._id,
+            username=username,
+            password_hash=password_hash,
+            scopes=scopes,
+        )
         self._rows[username] = row
         return row
 
@@ -57,8 +63,11 @@ def app():
     application = create_app(f"test-{uuid.uuid4().hex}", use_db=False)
     # Replace the injected executor with the fake for the duration of the test.
     fake = FakeUsers()
-    fake._rows["alice"] = UserRow(
-        1, "alice", hash_password("pw"), ["user", "admin"]
+    fake._rows["alice"] = User(
+        id=1,
+        username="alice",
+        password_hash=hash_password("pw"),
+        scopes=["user", "admin"],
     )
     # request_arg tells sanic-ext the constructor's request parameter name so
     # it injects the request into our factory (which just returns the fake).

@@ -11,6 +11,8 @@ battery, then gets out of the way.
   `app/routes/me.py`): register, login, `@protected`, `@require_scopes`.
 - Postgres access via mayim, injected into route handlers by type
   annotation (`app/services/users.py`).
+- Pydantic models as the database schema (`app/models/`), via SQLModel,
+  with Alembic migrations generated from them (`migrations/`).
 - OpenAPI spec and docs UI via sanic-ext, including a bearer security
   scheme for the protected routes.
 - Security headers and trusted-host enforcement, on by default.
@@ -38,10 +40,11 @@ generate one). Start Postgres, either with Docker:
 docker compose up -d db
 ```
 
-or point `POSTGRES_DSN` at an existing instance, then apply the schema:
+or point `POSTGRES_DSN` at an existing instance, then apply the
+migrations:
 
 ```bash
-psql "$POSTGRES_DSN" -f schema.sql
+uv run alembic upgrade head
 ```
 
 Run the dev server:
@@ -71,18 +74,65 @@ app/
   sessions.py        optional Redis-backed sessions
   metrics.py          optional Prometheus /metrics endpoint
   models/
-    user.py           plain dataclasses for request/response bodies
+    user.py           User table model + request/response bodies (pydantic)
   routes/
     auth.py           POST /auth/register, POST /auth/login
     me.py             GET /me, GET /me/admin (protected examples)
   services/
     users.py          mayim executor for the users table
   queries/              place for standalone .sql files (see mayim below)
+migrations/
+  env.py                Alembic environment (reads POSTGRES_DSN)
+  versions/             one file per migration, generated from the models
 tests/
   test_auth.py          smoke tests against an in-memory fake executor
-schema.sql              minimal Postgres schema for the starter
 docker-compose.yml       Postgres (and optionally Redis) for local dev
 ```
+
+## Models and migrations
+
+The pydantic models in `app/models/` are the schema, the way `models.py`
+is in Django. A table is a [SQLModel](https://sqlmodel.tiangolo.com/)
+class with `table=True`:
+
+```python
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: int | None = Field(default=None, primary_key=True, sa_type=BigInteger)
+    username: str = Field(sa_type=Text, unique=True)
+    ...
+```
+
+There is no hand-written `schema.sql`. Change a model, then:
+
+```bash
+uv run alembic revision --autogenerate -m "add user email"   # makemigrations
+uv run alembic upgrade head                                  # migrate
+```
+
+Other commands you will want:
+
+```bash
+uv run alembic current          # which migration the database is on
+uv run alembic history          # list migrations (showmigrations)
+uv run alembic downgrade -1     # undo the last migration
+uv run alembic upgrade head --sql   # print the SQL without running it (sqlmigrate)
+uv run alembic check            # fail if models and migrations have drifted
+```
+
+Read each generated file in `migrations/versions/` before committing it:
+autogenerate sees added/removed tables and columns, type and nullability
+changes, but it records a rename as a drop plus an add.
+
+For a new model, add the class under `app/models/` and import it in
+`app/models/__init__.py`; Alembic only sees models imported there.
+
+`docker compose up` runs the `migrate` service (`alembic upgrade head`)
+before starting the API.
+
+Migrations only use SQLAlchemy to describe tables. Queries still go
+through mayim, which hydrates rows into the same model classes.
 
 ## mayim, in brief
 
@@ -96,16 +146,9 @@ annotated with a return type and left with an empty body (`...`); mayim
 fills them in at runtime. `app/services/users.py` looks like this:
 
 ```python
-from dataclasses import dataclass
 from mayim import PostgresExecutor, query
 
-
-@dataclass
-class UserRow:
-    id: int
-    username: str
-    password_hash: str
-    scopes: list[str]
+from app.models.user import User
 
 
 class UserExecutor(PostgresExecutor):
@@ -117,11 +160,11 @@ class UserExecutor(PostgresExecutor):
         LIMIT 1;
         """
     )
-    async def by_username(self, username: str) -> UserRow | None: ...
+    async def by_username(self, username: str) -> User | None: ...
 ```
 
 Calling `await users.by_username("alice")` runs that SQL with
-`username` bound from the argument and returns either a `UserRow` or
+`username` bound from the argument and returns either a `User` or
 `None`, matching the annotation. `$username` in the query is a mayim
 placeholder bound to the `username` parameter by name, not raw string
 interpolation, so this is safe against SQL injection the same way a
