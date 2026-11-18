@@ -13,6 +13,8 @@ dependencies = [
     "pyjwt>=2.15.1",
     "bcrypt>=5.0.0",
     "python-dotenv>=1.2.4",
+    "sqlmodel>=0.0.50",
+    "alembic>=1.20.1",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +29,20 @@ dev = ["pytest>=9.2.0", "pytest-asyncio>=1.5.0", "ruff>=0.17.5"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "fixture-scope"
+
+[tool.alembic]
+# Migrations live in ./migrations; the database URL comes from POSTGRES_DSN
+# (see migrations/env.py), so there is no alembic.ini.
+script_location = "%(here)s/migrations"
+prepend_sys_path = ["."]
+file_template = "%%(year)d%%(month).2d%%(day).2d_%%(hour).2d%%(minute).2d_%%(slug)s"
+
+# Format each generated migration so it passes `ruff check`.
+[[tool.alembic.post_write_hooks]]
+name = "ruff"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"
 
 [tool.ruff]
 line-length = 79

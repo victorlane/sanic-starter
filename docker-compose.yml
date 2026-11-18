@@ -6,8 +6,22 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: app
     ports: ["5432:5432"]
-    volumes:
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # One-shot: applies pending migrations, then exits. `api` waits for it.
+  migrate:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@db:5432/app
+    entrypoint: ["uv", "run", "alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
 
   # Uncomment to enable Redis sessions locally (also set REDIS_URL in .env):
   # redis:
@@ -20,4 +34,6 @@ services:
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@db:5432/app
     ports: ["8000:8000"]
-    depends_on: [db]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully

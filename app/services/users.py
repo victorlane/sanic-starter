@@ -11,19 +11,12 @@ annotation** — that is the dependency-injection story: a handler simply
 declares ``users: UserExecutor`` and mayim supplies it per request.
 """
 
-from __future__ import annotations
-
-from dataclasses import dataclass
+# No ``from __future__ import annotations`` here: mayim reads each method's
+# return annotation at runtime and needs the real class, not a string.
 
 from mayim import PostgresExecutor, query
 
-
-@dataclass
-class UserRow:
-    id: int
-    username: str
-    password_hash: str
-    scopes: list[str]
+from app.models.user import User
 
 
 class UserExecutor(PostgresExecutor):
@@ -35,7 +28,7 @@ class UserExecutor(PostgresExecutor):
         LIMIT 1;
         """
     )
-    async def by_username(self, username: str) -> UserRow | None: ...
+    async def by_username(self, username: str) -> User | None: ...
 
     @query(
         """
@@ -49,4 +42,4 @@ class UserExecutor(PostgresExecutor):
         username: str,
         password_hash: str,
         scopes: list[str],
-    ) -> UserRow: ...
+    ) -> User: ...
