@@ -101,6 +101,21 @@ async def test_login_returns_token(app):
     assert "token" in resp.json
 
 
+async def test_login_rejects_wrong_password(app):
+    _, resp = await app.asgi_client.post(
+        "/auth/login", json={"username": "alice", "password": "nope"}
+    )
+    assert resp.status == 401
+
+
+async def test_register_then_login(app):
+    creds = {"username": "bob", "password": "pw12345"}
+    _, resp = await app.asgi_client.post("/auth/register", json=creds)
+    assert resp.status == 201
+    _, resp = await app.asgi_client.post("/auth/login", json=creds)
+    assert resp.status == 200
+
+
 async def test_protected_accepts_valid_token(app):
     token = _token(app, ["user", "admin"])
     _, resp = await app.asgi_client.get(

@@ -8,8 +8,9 @@ authorization.
 
 from __future__ import annotations
 
-import bcrypt
 import jwt
+from argon2 import PasswordHasher
+from argon2.exceptions import InvalidHashError, VerificationError
 from jwt.exceptions import PyJWTError
 from sanic import Request
 from sanic.contrib.auth import get_token, scoped
@@ -18,14 +19,20 @@ from sanic.contrib.auth import protected as _protected
 # --- password hashing -------------------------------------------------------
 
 
+# Argon2id with argon2-cffi's defaults (3 passes, 64 MiB, 4 lanes). Both
+# helpers are CPU-bound and blocking: from a handler, call them through
+# ``asyncio.to_thread`` so the event loop keeps serving other requests.
+_hasher = PasswordHasher()
+
+
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(14)).decode()
+    return _hasher.hash(password)
 
 
 def verify_password(password: str, hashed: str) -> bool:
     try:
-        return bcrypt.checkpw(password.encode(), hashed.encode())
-    except ValueError:
+        return _hasher.verify(hashed, password)
+    except (VerificationError, InvalidHashError):
         return False
 
 

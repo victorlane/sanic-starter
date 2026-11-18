@@ -9,6 +9,8 @@ Demonstrates, together:
 
 from __future__ import annotations
 
+from asyncio import to_thread
+
 from sanic import Blueprint, Request, json
 from sanic.security import ratelimit
 from sanic_ext import openapi, validate
@@ -35,7 +37,8 @@ async def register(
 
     row = await users.create(
         username=body.username,
-        password_hash=hash_password(body.password),
+        # Hashing is slow on purpose; keep it off the event loop.
+        password_hash=await to_thread(hash_password, body.password),
         scopes=["user"],
     )
     token = issue_token(
@@ -58,7 +61,9 @@ async def register(
 @validate(json=LoginPayload)
 async def login(request: Request, body: LoginPayload, users: UserExecutor):
     row = await users.by_username(body.username)
-    if row is None or not verify_password(body.password, row.password_hash):
+    if row is None or not await to_thread(
+        verify_password, body.password, row.password_hash
+    ):
         return json({"error": "invalid credentials"}, status=401)
 
     token = issue_token(
