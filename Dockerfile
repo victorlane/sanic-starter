@@ -1,10 +1,10 @@
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        gcc libpq-dev \
+        gcc git libpq-dev \
     && pip install --no-cache-dir uv \
     && apt-get purge -y gcc \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
